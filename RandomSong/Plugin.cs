@@ -17,6 +17,7 @@ namespace RandomSong
             if (_init) return;
             _init = true;
 
+            UIHelper.OnLoad();
             RandomSongManager.OnLoad();
         }
 
