@@ -21,14 +21,15 @@ namespace RandomSong
         public const int MainScene = 1;
         public const int GameScene = 5;
 
-        MenuSceneSetupData _menuSceneSetupData = null;
+        MenuSceneSetupData menuSceneSetupData = null;
         StandardLevelSelectionFlowCoordinator flowController = null;
         StandardLevelSelectionNavigationController navController = null;
         StandardLevelListViewController listViewController = null;
         StandardLevelDifficultyViewController difficultyViewController;
         StandardLevelListTableView listTableView = null;
         TableView tableView = null;
-        StandardLevelDetailViewController _songDetailViewController = null;
+        StandardLevelDetailViewController detailViewController = null;
+        SongPreviewPlayer player = null;
 
         private Button randomButton;
 
@@ -37,7 +38,7 @@ namespace RandomSong
         static int allowAfter = 10;
         static bool excludeStandard = false;
 
-        static Vector2 pos = new Vector2(0.0f, 0.0f);
+        static Vector2 pos = new Vector2(60.0f, 76.0f);
 
         LevelDifficulty currentDiff = LevelDifficulty.Expert;
 
@@ -74,21 +75,40 @@ namespace RandomSong
                 difficultyViewController = flowController.GetPrivateField<StandardLevelDifficultyViewController>("_levelDifficultyViewController");
                 listTableView = listViewController.GetPrivateField<StandardLevelListTableView>("_levelListTableView");
                 tableView = listTableView.GetPrivateField<TableView>("_tableView");
-                _menuSceneSetupData = flowController.GetPrivateField<MenuSceneSetupData>("_menuSceneSetupData");
+                detailViewController = flowController.GetPrivateField<StandardLevelDetailViewController>("_levelDetailViewController");
+                menuSceneSetupData = flowController.GetPrivateField<MenuSceneSetupData>("_menuSceneSetupData");
+                player = Resources.FindObjectsOfTypeAll<SongPreviewPlayer>().FirstOrDefault();
                 CreateRandomButton();
+                CreatUI();
             }
+        }
+
+        private void CreatUI()
+        {
+            var subMenu = SettingsUI.CreateSubMenu("Random Song");
+            var diff = subMenu.AddList("Random Song Difficulty", Difficulties());
+            diff.GetValue += delegate { return (float)currentDiff; };
+            diff.SetValue += delegate (float value) { currentDiff = (LevelDifficulty)value; };
+            diff.FormatValue += delegate (float value) { return LevelDifficultyMethods.Name((LevelDifficulty)value); };
+        }
+
+        private float[] Difficulties()
+        {
+            return new float[] {
+                (float)LevelDifficulty.Easy,
+                (float)LevelDifficulty.Normal,
+                (float)LevelDifficulty.Hard,
+                (float)LevelDifficulty.Expert,
+                (float)LevelDifficulty.ExpertPlus
+            };
         }
 
         private void CreateRandomButton()
         {
             if (randomButton == null)
             {
-                //if (_songDetailViewController == null)
-                //{
-                //    _songDetailViewController = ReflectionUtil.GetPrivateField<StandardLevelDetailViewController>(flowController, "_levelDetailViewController");
-                //}
-                RectTransform detailsRectTransform = navController.GetComponent<RectTransform>();
-                randomButton = UIHelper.CreateUIButton(detailsRectTransform, "PlayButton");
+                RectTransform navRectTransform = navController.GetComponent<RectTransform>();
+                randomButton = UIHelper.CreateUIButton(navRectTransform, "PlayButton");
                 UIHelper.SetButtonText(randomButton, "Random");
                 UIHelper.SetButtonTextSize(randomButton, 3f);
                 (randomButton.transform as RectTransform).anchoredPosition = pos;
@@ -103,30 +123,30 @@ namespace RandomSong
             //{
             //    LogComponents(mainSettingsMenu.transform, "=");
             //}
-            if (Input.GetKeyDown(KeyCode.JoystickButton9))
-            {
-                pos.x += 1f;
-                Console.WriteLine(pos.x);
-            }
-            if (Input.GetKeyDown(KeyCode.JoystickButton8))
-            {
-                pos.x -= 1f;
-                Console.WriteLine(pos.x);
-            }
-            if (Input.GetKeyDown(KeyCode.JoystickButton0))
-            {
-                pos.y += 1f;
-                Console.WriteLine(pos.y);
-            }
-            if (Input.GetKeyDown(KeyCode.JoystickButton2))
-            {
-                pos.y -= 1f;
-                Console.WriteLine(pos.y);
-            }
-            if (randomButton != null)
-            {
-                (randomButton.transform as RectTransform).anchoredPosition = pos;
-            }
+            //if (Input.GetKeyDown(KeyCode.JoystickButton9))
+            //{
+            //    pos.x += 1f;
+            //    Console.WriteLine(pos.x);
+            //}
+            //if (Input.GetKeyDown(KeyCode.JoystickButton8))
+            //{
+            //    pos.x -= 1f;
+            //    Console.WriteLine(pos.x);
+            //}
+            //if (Input.GetKeyDown(KeyCode.JoystickButton0))
+            //{
+            //    pos.y += 1f;
+            //    Console.WriteLine(pos.y);
+            //}
+            //if (Input.GetKeyDown(KeyCode.JoystickButton2))
+            //{
+            //    pos.y -= 1f;
+            //    Console.WriteLine(pos.y);
+            //}
+            //if (randomButton != null)
+            //{
+            //    (randomButton.transform as RectTransform).anchoredPosition = pos;
+            //}
         }
 
         private List<IStandardLevel> SongsForDifficulty(LevelDifficulty diff)
@@ -170,31 +190,25 @@ namespace RandomSong
 
         private void PlayRandomSong()
         {
-            // Is this instant?
+            // Fade screen away to not spoil song
             var fade = Resources.FindObjectsOfTypeAll<FadeOutOnGameEvent>().FirstOrDefault();
             fade.HandleGameEvent(0.0f);
-            // Also turn preview down
+            
+            // Turn preview down
+            player.volume = 0;
 
-            var _gameplayMode = _songDetailViewController.gameplayMode;
-            var _gameplayOptions = _songDetailViewController.gameplayOptions;
             var level = RandomSong();
-            Console.WriteLine(level.songName + " " + _gameplayMode + " " + gameplayOptions);
+            var difficultyLevel = level.GetDifficultyLevel(currentDiff);
 
             int row = listTableView.RowNumberForLevelID(level.levelID);
             tableView.SelectRow(row, true);
             tableView.ScrollToRow(row, false);
-            var difficultyLevel = level.GetDifficultyLevel(currentDiff);
             difficultyViewController.SetDifficultyLevels(level.difficultyBeatmaps, difficultyLevel);
-            _songDetailViewController.SetContent(difficultyLevel, _gameplayMode);
-            _songDetailViewController.PlayButtonPressed();
-        }
-
-        public GameplayOptions gameplayOptions
-        {
-            get
-            {
-                return PersistentSingleton<GameDataModel>.instance.gameDynamicData.GetCurrentPlayerDynamicData().gameplayOptions;
-            }
+            var gameplayMode = detailViewController.gameplayMode;
+            var gameplayOptions = detailViewController.gameplayOptions;
+            detailViewController.SetContent(difficultyLevel, gameplayMode);
+            Console.WriteLine("Randomly playing: "+level.songName);
+            detailViewController.PlayButtonPressed();
         }
 
         public static void LogComponents(Transform t, string prefix)

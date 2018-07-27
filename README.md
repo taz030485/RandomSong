@@ -1,11 +1,15 @@
 # Random Song
 Plugin for Beat Saber to select and play a song at random  
-# **COMING SOON**
   
 # Usage  
+Just press the Random button in the top right of the main screen.  
+  
+Change song difficulty in the Random Song sub menu of Settings.  
+Can only select one difficulty at the moment.  
+Which defaults to Expert and is not saved between game launches (yet).  
   
 # Changes  
-1.0 *Coming Soon*  
+1.0  
 Initial release  
   
 # Installation  
