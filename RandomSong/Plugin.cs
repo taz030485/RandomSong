@@ -8,18 +8,30 @@ namespace RandomSong
     public class Plugin : IPlugin
     {
         public string Name => "Random Song";
-        public string Version => "1.0";
+        public string Version => "1.1";
 
         private bool _init = false;
+
+        static Plugin instance;
 
         public void OnApplicationStart()
         {
             if (_init) return;
             _init = true;
+            instance = this;
 
             UIHelper.OnLoad();
             RandomSongManager.OnLoad();
         }
+
+        public static string PluginName
+        {
+            get
+            {
+                return instance.Name;
+            }
+        }
+
 
         public void OnApplicationQuit()
         {

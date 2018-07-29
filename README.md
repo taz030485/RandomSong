@@ -5,17 +5,17 @@ Plugin for Beat Saber to select and play a song at random
 Just press the Random button in the top right of the main screen.  
 Pick a random song from the current displayed list of songs (All, Favourites, etc)  
   
-Change song difficulty in the Random Song sub menu of Settings.  
-Can only select one difficulty at the moment.  
-Which defaults to Expert and is not saved between game launches (yet).  
+Change song difficulty range in the Random Song sub menu of Settings.  
   
 # Changes  
+1.1  
+Added min and max difficulty range  
+Added exclude standard songs option  
+Settings are saved between launches  
+Fixed black screen bugs  
+
 1.0  
 Initial release  
-
-  **Known Issues:**  
-Pressing Random too quickly after returning to the menu can cause the screen to stay black.  
-Pressing Random when the song lis has no songs of the selected difficulty (eg, Hard for One Saber) can cause the screen to stay black.  
   
 # Installation  
 *This plugin requires IPA which you will automatically get if you install [the Song Loader Plugin](https://github.com/xyonico/BeatSaberSongInjector/releases).*  
