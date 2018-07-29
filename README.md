@@ -6,6 +6,7 @@ Just press the Random button in the top right of the main screen.
 Pick a random song from the current displayed list of songs (All, Favourites, etc)  
   
 Change song difficulty range in the Random Song sub menu of Settings.  
+If the Random button is disabled, you have no songs in the current shown list that match you filter options.  
   
 # Changes  
 1.1  
