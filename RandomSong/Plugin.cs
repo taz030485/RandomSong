@@ -8,7 +8,7 @@ namespace RandomSong
     public class Plugin : IPlugin
     {
         public string Name => "Random Song";
-        public string Version => "1.1";
+        public string Version => "1.2";
 
         private bool _init = false;
 

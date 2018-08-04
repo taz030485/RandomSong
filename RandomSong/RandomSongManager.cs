@@ -18,8 +18,6 @@ namespace RandomSong
     public class RandomSongManager : MonoBehaviour
     {
         public static RandomSongManager Instance = null;
-        public const int MainScene = 1;
-        public const int GameScene = 5;
 
         StandardLevelSelectionFlowCoordinator flowController = null;
         StandardLevelSelectionNavigationController navController = null;
@@ -36,13 +34,15 @@ namespace RandomSong
 
         static int allowAfter = 10;
         static bool excludeStandard = false;
+        static bool autoPlay = true;
 
-        static Vector2 pos = new Vector2(60.0f, 76.0f);
+        static Vector2 pos = new Vector2(65.0f, 74.0f);
 
         LevelDifficulty minDiff = LevelDifficulty.Easy;
         LevelDifficulty maxDiff = LevelDifficulty.ExpertPlus;
 
         const string excludeStandardSetting = "excludeStandard";
+        const string autoPlaySetting = "autoPlay";
         const string minDiffSetting = "minDiff";
         const string maxDiffSetting = "maxDiff";
 
@@ -53,6 +53,16 @@ namespace RandomSong
         {
             if (Instance != null) return;
             new GameObject("Random Song Manager").AddComponent<RandomSongManager>();
+        }
+
+        public static bool isMenuScene(Scene scene)
+        {
+            return (scene.name == "Menu");
+        }
+
+        public static bool isGameScene(Scene scene)
+        {
+            return (scene.name == "StandardLevel");
         }
 
         public void Awake()
@@ -67,6 +77,7 @@ namespace RandomSong
                 pastSongs = new Queue<IStandardLevel>(20);
 
                 excludeStandard = ModPrefs.GetBool(Plugin.PluginName, excludeStandardSetting, false, true);
+                autoPlay = ModPrefs.GetBool(Plugin.PluginName, autoPlaySetting, true, true);
                 minDiff = (LevelDifficulty)ModPrefs.GetInt(Plugin.PluginName, minDiffSetting, (int)LevelDifficulty.Easy, true);
                 maxDiff = (LevelDifficulty)ModPrefs.GetInt(Plugin.PluginName, maxDiffSetting, (int)LevelDifficulty.ExpertPlus, true);
             }
@@ -78,7 +89,7 @@ namespace RandomSong
 
         public void SceneManagerOnActiveSceneChanged(Scene arg0, Scene scene)
         {
-            if (scene.buildIndex == MainScene)
+            if (isMenuScene(scene))
             {
                 flowController = Resources.FindObjectsOfTypeAll<StandardLevelSelectionFlowCoordinator>().FirstOrDefault();
                 navController = flowController.GetPrivateField<StandardLevelSelectionNavigationController>("_levelSelectionNavigationController");
@@ -114,7 +125,6 @@ namespace RandomSong
                 maxDiff = temp;
                 ModPrefs.SetInt(Plugin.PluginName, minDiffSetting, (int)minDiff);
                 ModPrefs.SetInt(Plugin.PluginName, maxDiffSetting, (int)maxDiff);
-                Console.WriteLine("RandomSong: Fixed difficulty order");
             }
         }
 
@@ -149,6 +159,15 @@ namespace RandomSong
                 excludeStandard = value;
                 ModPrefs.SetBool(Plugin.PluginName, excludeStandardSetting, excludeStandard);
             };
+
+            var autoPlayMenu = subMenu.AddBool("Auto Play");
+            autoPlayMenu.GetValue += delegate {
+                return autoPlay;
+            };
+            autoPlayMenu.SetValue += delegate (bool value) {
+                autoPlay = value;
+                ModPrefs.SetBool(Plugin.PluginName, autoPlaySetting, autoPlay);
+            };
         }
 
         private float[] Difficulties()
@@ -169,9 +188,9 @@ namespace RandomSong
                 RectTransform navRectTransform = navController.GetComponent<RectTransform>();
                 randomButton = UIHelper.CreateUIButton(navRectTransform, "PlayButton");
                 UIHelper.SetButtonText(randomButton, "Random");
-                UIHelper.SetButtonTextSize(randomButton, 3f);
+                UIHelper.SetButtonTextSize(randomButton, 2.5f);
                 (randomButton.transform as RectTransform).anchoredPosition = pos;
-                (randomButton.transform as RectTransform).sizeDelta = new Vector2(30f, 6f);
+                (randomButton.transform as RectTransform).sizeDelta = new Vector2(20, 5f);
                 randomButton.onClick.AddListener(new UnityAction(PlayRandomSong));
             }
 
@@ -192,7 +211,6 @@ namespace RandomSong
             if (randomButton != null && (isShowing != randomButton.gameObject.activeInHierarchy))
             {
                 isShowing = randomButton.gameObject.activeInHierarchy;
-                Console.WriteLine(isShowing);
                 if (!isShowing)
                 {
                     randomButton.interactable = false;
@@ -290,12 +308,10 @@ namespace RandomSong
             if (level != null)
             {
                 randomButton.interactable = true;
-                Console.WriteLine("RandomSong: Next song is - " + level.songName);
             }
             else
             {
                 randomButton.interactable = false;
-                Console.WriteLine("RandomSong: No vaild songs availbe");
             }
         }
 
@@ -308,39 +324,39 @@ namespace RandomSong
             do
             {
                 diff = (LevelDifficulty)UnityEngine.Random.Range((int)minDiff, (int)maxDiff + 1);
-                Console.WriteLine(diff);
                 difficultyLevel = level.GetDifficultyLevel(diff);
             } while (difficultyLevel == null);
 
-            // Fade screen away to not spoil song
-            var fade = Resources.FindObjectsOfTypeAll<FadeOutOnGameEvent>().FirstOrDefault();
-            fade.HandleGameEvent(0.7f);
-            // Turn preview down
-            player.volume = 0;
-
-            yield return new WaitForSeconds(1.0f);
+            if (autoPlay)
+            {
+                // Fade screen away to not spoil song
+                var fade = Resources.FindObjectsOfTypeAll<FadeOutOnGameEvent>().FirstOrDefault();
+                fade.HandleGameEvent(0.7f);
+                // Turn preview down
+                player.volume = 0;
+                yield return new WaitForSeconds(1.0f);
+            }
 
             int row = listTableView.RowNumberForLevelID(level.levelID);
             tableView.SelectRow(row, true);
             tableView.ScrollToRow(row, false);
 
-            //yield return new WaitForSeconds(0.1f);
             difficultyViewController.SetDifficultyLevels(level.difficultyBeatmaps, difficultyLevel);
-
-            //yield return new WaitForSeconds(0.1f);
 
             var gameplayMode = detailViewController.gameplayMode;
             var gameplayOptions = detailViewController.gameplayOptions;
             detailViewController.SetContent(difficultyLevel, gameplayMode);
 
-            //yield return new WaitForSeconds(0.1f);
-
-            Console.WriteLine("Randomly playing: " + level.songName);
-            detailViewController.PlayButtonPressed();
+            if (autoPlay)
+            {
+                detailViewController.PlayButtonPressed();
+            }
         }
 
         private void PlayRandomSong()
         {
+            RandomSong();
+
             if (level != null)
             {
                 StartCoroutine(SelectAndLoadSong(level));
