@@ -11,7 +11,8 @@ If the Random button is disabled, you have no songs in the current shown list th
 # Changes  
 1.2  
 Added Autoplay option  
-
+Fixed No Fail and No Obstacles  
+  
 1.1  
 Added min and max difficulty range  
 Added exclude standard songs option  

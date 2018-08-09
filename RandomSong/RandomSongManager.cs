@@ -222,10 +222,18 @@ namespace RandomSong
                 }
             }
 
-            if (Input.GetKeyDown(KeyCode.JoystickButton0)&& Input.GetKeyDown(KeyCode.JoystickButton2))
+            if (Input.GetKeyDown(KeyCode.C))
             {
-                StartCoroutine(TestRandomSong());
+                if (randomButton.interactable)
+                {
+                    PlayRandomSong();
+                }
             }
+
+            //if (Input.GetKeyDown(KeyCode.JoystickButton0)&& Input.GetKeyDown(KeyCode.JoystickButton2))
+            //{
+            //    StartCoroutine(TestRandomSong());
+            //}
 
             //if (Input.GetKeyDown((KeyCode)ConInput.Vive.RightTrackpadPress))
             //{
@@ -350,6 +358,13 @@ namespace RandomSong
             if (autoPlay)
             {
                 detailViewController.PlayButtonPressed();
+
+                if (gameplayMode.IsSolo() && !gameplayOptions.validForScoreUse)
+                {
+                    var prompt = flowController.GetPrivateField<SimpleDialogPromptViewController>("_simpleDialogPromptViewController");
+                    yield return new WaitForSeconds(0.1f);
+                    flowController.HandleSimpleDialogPromptViewControllerDidFinish(prompt, true);
+                }
             }
         }
 
