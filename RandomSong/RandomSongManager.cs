@@ -97,7 +97,6 @@ namespace RandomSong
                 difficultyViewController = flowController.GetPrivateField<StandardLevelDifficultyViewController>("_levelDifficultyViewController");
                 listTableView = listViewController.GetPrivateField<StandardLevelListTableView>("_levelListTableView");
                 tableView = listTableView.GetPrivateField<TableView>("_tableView");
-                //tableView.didSelectRowEvent += didSelectRowEvent;
                 detailViewController = flowController.GetPrivateField<StandardLevelDetailViewController>("_levelDetailViewController");
                 player = Resources.FindObjectsOfTypeAll<SongPreviewPlayer>().FirstOrDefault();
 
@@ -338,8 +337,11 @@ namespace RandomSong
             if (autoPlay)
             {
                 // Fade screen away to not spoil song
-                var fade = Resources.FindObjectsOfTypeAll<FadeOutOnGameEvent>().FirstOrDefault();
-                fade.HandleGameEvent(0.7f);
+                var gameSceneManager = Resources.FindObjectsOfTypeAll<GameScenesManager>().FirstOrDefault();
+                gameSceneManager.HandleExecutorTransitionDidStart(0.7f);
+
+                //var fade = Resources.FindObjectsOfTypeAll<FadeOutOnGameEvent>().FirstOrDefault();
+                //fade.HandleGameEvent(0.7f);
                 // Turn preview down
                 player.volume = 0;
                 yield return new WaitForSeconds(1.0f);
@@ -378,18 +380,21 @@ namespace RandomSong
             }
         }
 
-        public static void LogComponents(Transform t, string prefix)
+        public static void LogComponents(Transform t, string prefix = "=", bool includeScipts = false)
         {
             Console.WriteLine(prefix + ">" + t.name);
 
-            foreach (var comp in t.GetComponents<MonoBehaviour>())
+            if (includeScipts)
             {
-                Console.WriteLine(prefix + "-->" + comp.GetType());
+                foreach (var comp in t.GetComponents<MonoBehaviour>())
+                {
+                    Console.WriteLine(prefix + "-->" + comp.GetType());
+                }
             }
 
             foreach (Transform child in t)
             {
-                LogComponents(child, prefix + "=");
+                LogComponents(child, prefix + "=", includeScipts);
             }
         }
     }

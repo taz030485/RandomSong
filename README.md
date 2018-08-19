@@ -10,6 +10,7 @@ If the Random button is disabled, you have no songs in the current shown list th
   
 # Changes  
 1.2  
+Updated for Beat Saber 0.11.2  
 Added Autoplay option  
 Fixed No Fail and No Obstacles  
   
